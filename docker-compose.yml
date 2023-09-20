@@ -1,0 +1,35 @@
+version: "3.9"
+
+networks:
+  worker-application_default:
+
+services:
+  master:
+    image: locustio/locust
+    ports:
+     - "8089:8089"
+    volumes:
+      - ./locust:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --master -H http://goapi:3000
+    networks:
+      - worker-application_default
+
+  worker:
+    image: locustio/locust
+    volumes:
+      - ./locust:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --worker --master-host master
+    networks:
+      - worker-application_default
+
+  goapi:
+    build:
+      context: go-api
+      dockerfile: ./Dockerfile
+    container_name: goapi
+    volumes:
+      - ./go-api/source:/opt/app/api
+    ports:
+      - "3000:3000"
+    networks:
+      - worker-application_default
